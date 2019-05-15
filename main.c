@@ -10,20 +10,11 @@
 struct itimerval nval, oval;
 
 void RefreshWindow();
-/*
-void userHandler()
-{
-	nval.it_interval.tv_sec = 0;
-	nval.it_interval.tv_usec = 0;
-	nval.it_value.tv_sec = 0;
-	nval.it_value.tv_usec = 0;
-	setitimer(ITIMER_REAL, &nval, &oval);
-}*/
 
 void my_handler()
 {
 	int value;
-	sc_regGet(IGNR_PRESS, &value);
+	sc_regGet(IGNR_CLOCK, &value);
 	if(value == 0 && Pointer + 1 < 100)
 	{
 		Pointer++;
@@ -37,15 +28,35 @@ void my_handler()
 		nval.it_value.tv_sec = 0;
 		nval.it_value.tv_usec = 0;
 	 	setitimer (ITIMER_REAL, &nval, &oval);
-		sc_regSet(IGNR_PRESS, 1);
+		sc_regSet(IGNR_CLOCK, 1);
 		RefreshWindow();
 	}
 }
 
+void my_handler2()
+{
+	int value;
+	sc_regGet(IGNR_CLOCK, &value);
+	if(value == 0 && Pointer + 1 < 100)
+	{
+		Pointer++;
+		RefreshWindow();
+	}
+	
+	signal(SIGALRM, my_handler);
+	nval.it_interval.tv_sec = 0;
+	nval.it_interval.tv_usec = 0;
+	nval.it_value.tv_sec = 0;
+	nval.it_value.tv_usec = 0;
+	setitimer (ITIMER_REAL, &nval, &oval);
+	sc_regSet(IGNR_CLOCK, 1);
+	RefreshWindow();
+       
+}
 void oneTimer()
 {
 	int value;
-	signal(SIGALRM, my_handler);
+	signal(SIGALRM, my_handler2);
 	nval.it_interval.tv_sec = 0;
 	nval.it_interval.tv_usec = 0;
 	nval.it_value.tv_sec = 1;
@@ -93,8 +104,8 @@ void printFlags()
 	if(value) bc_printA(" ZE ");
 	sc_regGet(OUT_OF_MEM, &value);
 	if(value) bc_printA(" OU ");
-	sc_regGet(IGNR_PRESS, &value);
-	if(!value) printf(" IP ");
+	sc_regGet(IGNR_CLOCK, &value);
+	if(value) printf(" IC ");
 	sc_regGet(COMMAND_ERROR, &value);
 	if(value) bc_printA(" CO ");
 }
@@ -225,7 +236,7 @@ void KbrdCommands()
 		switch(key)
 		{
 			case IgnrCancel: // c
-				sc_regSet(IGNR_PRESS, 1);
+				sc_regSet(IGNR_CLOCK, 1);
 				//signal(SIGUSR1, userHandler);
 				//raise(SIGUSR1);
 				RefreshWindow();
@@ -233,38 +244,38 @@ void KbrdCommands()
 
 			case Reset: // p
 				sc_regInit();
-				sc_regSet(IGNR_PRESS, 1);
+				sc_regSet(IGNR_CLOCK, 1);
 				sc_memoryInit();
 				RefreshWindow();
 				break;
 
 			case Run: // r
-				sc_regSet(IGNR_PRESS, 0);
+				sc_regSet(IGNR_CLOCK, 0);
 				endlessTimer();
 				break;
 
 			case sTep: // t
-				sc_regSet(IGNR_PRESS, 0);
+				sc_regSet(IGNR_CLOCK, 0);
 				oneTimer();
 				break;
 
 			case Load: // l
-				if(sc_regGet(IGNR_PRESS, &value) == 0)
+				if(sc_regGet(IGNR_CLOCK, &value) == 0)
 					break;
 				sc_regInit();
-				sc_regSet(IGNR_PRESS, 1);
+				sc_regSet(IGNR_CLOCK, 1);
 				sc_memoryLoad(fileLoad);
 				RefreshWindow();
 				break;
 
 			case Save:
-				if(sc_regGet(IGNR_PRESS, &value) == 0)
+				if(sc_regGet(IGNR_CLOCK, &value) == 0)
 					break;
 				sc_memorySave(fileSave);
 				break;
 
 			case Input: // i
-				if(sc_regGet(IGNR_PRESS, &value) == 0)
+				if(sc_regGet(IGNR_CLOCK, &value) == 0)
 					break;
 				scanf("%d", &temp);
 				sc_memorySet(Pointer, temp);
@@ -272,7 +283,7 @@ void KbrdCommands()
 				break;
 
 			case up:
-				if(sc_regGet(IGNR_PRESS, &value) == 0)
+				if(sc_regGet(IGNR_CLOCK, &value) == 0)
 					break;
 				if(!(Pointer - 10 < 0))
 				{
@@ -282,7 +293,7 @@ void KbrdCommands()
 				break;
 
 			case down:
-				if(sc_regGet(IGNR_PRESS, &value) == 0)
+				if(sc_regGet(IGNR_CLOCK, &value) == 0)
 					break;
 				if(!(Pointer + 10 > 99))
 				{
@@ -292,7 +303,7 @@ void KbrdCommands()
 				break;
 
 			case left:
-				if(sc_regGet(IGNR_PRESS, &value) == 0)
+				if(sc_regGet(IGNR_CLOCK, &value) == 0)
 					break;
 				if(!(Pointer - 1 < 0))
 				{
@@ -302,7 +313,7 @@ void KbrdCommands()
 				break;
 
 			case right:
-				if(sc_regGet(IGNR_PRESS, &value) == 0)
+				if(sc_regGet(IGNR_CLOCK, &value) == 0)
 					break;
 				if(!(Pointer + 1 > 99))
 				{
@@ -317,7 +328,7 @@ int main() {
 	setbuf(stdout, NULL);
 	sc_regInit();
 	sc_memoryInit();
-	sc_regSet(IGNR_PRESS, 1);
+	sc_regSet(IGNR_CLOCK, 1);
 	RefreshWindow();
 	KbrdCommands();
 	mt_gotoXY(50,1);

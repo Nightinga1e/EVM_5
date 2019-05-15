@@ -11,7 +11,7 @@
 #define OVERFLOW 1
 #define ZERO_ERR 2
 #define OUT_OF_MEM 3
-#define IGNR_PRESS 4
+#define IGNR_CLOCK 4
 #define COMMAND_ERROR 5
 
 int ram[SIZE];
